@@ -1,0 +1,154 @@
+18:42:05 From Dr. A - Instructor to Everyone:
+	# Read the CSV file into a Pandas DataFrame	# Set the index using the Ticker column	rate_df = pd.read_csv(	    Path("global_carry_trades.csv"))		# Review the DataFrame	rate_df.head()
+18:43:17 From Dr. A - Instructor to Everyone:
+	# Preprocess data	# scale all columns with numerical values	rate_df_scaled = StandardScaler().fit_transform(rate_df[["interest_differential" , "next_month_currency_return"]])
+18:43:43 From Dr. A - Instructor to Everyone:
+	# Diplay the first three rows of the scaled data	rate_df_scaled[0:3]
+18:44:23 From Dr. A - Instructor to Everyone:
+	# Create a DataFrame called with the scaled data	# The column names should match those referenced in the StandardScaler step	rate_df_scaled = pd.DataFrame(	    rate_df_scaled,	    columns=["interest_differential" , "next_month_currency_return"])	rate_df_scaled.head()
+18:45:56 From Dr. A - Instructor to Everyone:
+	%env HV_DOC_HTML=true
+18:46:03 From Dr. A - Instructor to Everyone:
+	pip install -q hvplot
+18:46:10 From Dr. A - Instructor to Everyone:
+	pip install -q holoviews
+18:46:23 From Stacy Cowart to Everyone:
+	It’s been the Monday-est Tuesday for me. Not you Dr. A
+18:46:48 From Stacy Cowart to Everyone:
+	From your lips to God’s ears
+18:49:06 From Dr. A - Instructor to Everyone:
+	rate_df["IMF Country Code"].value_counts()
+18:49:16 From Dr. A - Instructor to Everyone:
+	# Encode (convert to dummy variables) the "IMF Country Code" column	countries_encoded = pd.get_dummies(rate_df['IMF Country Code'])		# Review the DataFrame	countries_encoded.head()
+18:50:41 From Dr. A - Instructor to Everyone:
+	# Concatenate the scaled data DataFrame with the "IMF Country Code" encoded dummies 	rate_df_scaled = pd.concat([rate_df_scaled, countries_encoded], axis=1)		# Display the combined DataFrame.	rate_df_scaled.head()
+18:52:04 From Dr. A - Instructor to Everyone:
+	# Initialize the K-Means model with n_clusters=3	model = KMeans(n_clusters=3, random_state=1, n_init='auto')		# Fit the model for the rate_df_scaled DataFrame	model.fit(rate_df_scaled)		# Save the predicted model clusters to a new DataFrame.	country_clusters = model.predict(rate_df_scaled)		# View the country clusters	print(country_clusters)
+18:53:04 From Dr. A - Instructor to Everyone:
+	# Create a copy of the concatenated DataFrame	rate_scaled_predictions = rate_df_scaled.copy()		# Create a new column in the copy of the concatenated DataFrame with the predicted clusters	rate_scaled_predictions["CountryCluster"] = country_clusters		# Review the DataFrame	rate_scaled_predictions.head()
+18:54:32 From Dr. A - Instructor to Everyone:
+	# Group the saved DataFrame by cluster using `groupby` to calculate average currency returns	rate_scaled_predictions.groupby(by=['CountryCluster'])['next_month_currency_return'].mean()
+18:55:45 From Dr. A - Instructor to Everyone:
+	hvplot.extension('bokeh')	rate_scaled_predictions.hvplot.scatter(	    x="interest_differential",	    y="next_month_currency_return",	    by="CountryCluster"	)
+18:58:41 From Dr. A - Instructor to Everyone:
+	# Initialize a Birch model with n_clusters=5	birch_model = Birch(n_clusters=5)		# Fit the model for the df_bitcoin_scaled DataFrame	birch_model.fit(rate_df_scaled)
+18:58:58 From Dr. A - Instructor to Everyone:
+	# Predict the model segments (clusters)	country_clusters = birch_model.predict(rate_df_scaled)
+18:59:12 From Dr. A - Instructor to Everyone:
+	# Create a copy of the concatenated DataFrame	rate_scaled_predictions = rate_df_scaled.copy()		# Create a new column in the copy of the concatenated DataFrame with the predicted clusters	rate_scaled_predictions["CountryCluster"] = country_clusters		# Review the DataFrame	rate_scaled_predictions.head()
+19:00:10 From Dr. A - Instructor to Everyone:
+	hvplot.extension('bokeh')	rate_scaled_predictions.hvplot.scatter(	    x="interest_differential",	    y="next_month_currency_return",	    by="CountryCluster"	)
+19:07:33 From Ojha, Sonu to Everyone:
+	it happened to me last night
+19:07:39 From Dr. A - Instructor to Everyone:
+	%env HV_DOC_HTML=true
+19:08:05 From Dr. A - Instructor to Everyone:
+	pip install -q hvplot
+19:08:13 From Dr. A - Instructor to Everyone:
+	pip install -q holoviews
+19:08:32 From Dr. A - Instructor to Everyone:
+	# Required imports	import pandas as pd	import hvplot.pandas	from pathlib import Path	from sklearn.cluster import KMeans	from sklearn.preprocessing import StandardScaler
+19:08:58 From Dr. A - Instructor to Everyone:
+	# Read in the CSV file as a Pandas Dataframe	ccinfo_default_df = pd.read_csv(	    Path("ccinfo_transformed.csv")	)		ccinfo_default_df.head()
+19:09:48 From Dr. A - Instructor to Everyone:
+	# Plot the clusters using the "limit_bal" and "age" columns	hvplot.extension('bokeh')	ccinfo_default_df.hvplot.scatter(	    x="limit_bal",	    y="age",	    by="customer_segments"	)
+19:10:50 From Dr. A - Instructor to Everyone:
+	# Plot the clusters using the "bill_amt" and "pay_amt" columns	hvplot.extension('bokeh')	ccinfo_default_df.hvplot.scatter(	    x="bill_amt",	    y="pay_amt",	    by="customer_segments"	)
+19:14:12 From Dr. A - Instructor to Everyone:
+	# Use PCA to reduce the number of factors	# Import the PCA module	from sklearn.decomposition import PCA
+19:14:51 From Dr. A - Instructor to Everyone:
+	# Instantiate the PCA instance and declare the number of PCA variables	pca = PCA(n_components=2)
+19:16:07 From Dr. A - Instructor to Everyone:
+	# Fit the PCA model on the transformed credit card DataFrame	ccinfo_pca = pca.fit_transform(ccinfo_default_df)		# Review the first 5 rows of list data	ccinfo_pca[:5]
+19:17:11 From Dr. A - Instructor to Everyone:
+	# Calculate the PCA explained variance ratio	pca.explained_variance_ratio_
+19:22:12 From Dr. A - Instructor to Everyone:
+	# Create the PCA DataFrame	ccinfo_pca_df = pd.DataFrame(	    ccinfo_pca,	    columns=["PCA1", "PCA2"]	)		# Review the PCA DataFrame	ccinfo_pca_df.head()
+19:25:19 From Dr. A - Instructor to Everyone:
+	# Create a a list to store inertia values and the values of k	inertia = []	k = list(range(1, 11))
+19:25:49 From Dr. A - Instructor to Everyone:
+	# Append the value of the computed inertia from the `inertia_` attribute of teh KMeans model instance	for i in k:	    k_model = KMeans(n_clusters=i, random_state=1, n_init='auto')	    k_model.fit(ccinfo_pca_df)	    inertia.append(k_model.inertia_)
+19:26:05 From Dr. A - Instructor to Everyone:
+	# Define a DataFrame to hold the values for k and the corresponding inertia	elbow_data = {"k": k, "inertia": inertia}	df_elbow = pd.DataFrame(elbow_data)
+19:26:15 From Dr. A - Instructor to Everyone:
+	# Review the DataFrame	df_elbow.head()
+19:26:46 From Dr. A - Instructor to Everyone:
+	# Plot the Elbow Curve	hvplot.extension('bokeh')	df_elbow.hvplot.line(	    x="k", 	    y="inertia", 	    title="Elbow Curve", 	    xticks=k	)
+19:28:35 From Dr. A - Instructor to Everyone:
+	# Define the model with 3 clusters	model = KMeans(n_clusters=3, random_state=1, n_init='auto')
+19:28:46 From Dr. A - Instructor to Everyone:
+	# Fit the model	model.fit(ccinfo_pca_df)
+19:28:57 From Dr. A - Instructor to Everyone:
+	# Make predictions	k_3 = model.predict(ccinfo_pca_df)
+19:29:05 From Dr. A - Instructor to Everyone:
+	# Create a copy of the PCA DataFrame	ccinfo_pca_predictions_df = ccinfo_pca_df.copy()
+19:29:12 From Dr. A - Instructor to Everyone:
+	# Add a class column with the labels	ccinfo_pca_predictions_df["customer_segments"] = k_3
+19:30:13 From Dr. A - Instructor to Everyone:
+	# Plot the clusters	hvplot.extension('bokeh')	ccinfo_pca_predictions_df.hvplot.scatter(	    x="PCA1",	    y="PCA2",	    by="customer_segments"	)
+19:42:09 From Dr. A - Instructor to Everyone:
+	%env HV_DOC_HTML=true
+19:42:18 From Dr. A - Instructor to Everyone:
+	pip install -q hvplot
+19:42:26 From Dr. A - Instructor to Everyone:
+	pip install -q holoviews
+19:42:43 From Dr. A - Instructor to Everyone:
+	# Import the modules	import pandas as pd	import hvplot.pandas	from pathlib import Path	from sklearn.cluster import KMeans
+19:43:12 From Dr. A - Instructor to Everyone:
+	# Read the csv file into a pandas DataFrame	customers_transformed_df = pd.read_csv(	    Path("customers.csv")	)		# Review the DataFrame	customers_transformed_df.head()
+19:44:12 From Dr. A - Instructor to Everyone:
+	# Step 1: Use PCA to reduce the dimensionality of the transformed customers DataFrame to 2 principal components	# Import the PCA module	from sklearn.decomposition import PCA
+19:44:35 From Dr. A - Instructor to Everyone:
+	# Instantiate the PCA instance and declare the number of PCA variables	pca=PCA(n_components=2)
+19:45:06 From Dr. A - Instructor to Everyone:
+	# Fit the PCA model on the transformed credit card DataFrame	customers_pca = pca.fit_transform(customers_transformed_df)		# Review the first 5 rows of the array of list data	customers_pca[:5]
+19:45:44 From Ojha, Sonu to Everyone:
+	error again
+19:46:22 From Dr. A - Instructor to Everyone:
+	# Fit the PCA model on the transformed credit card DataFrame	customers_pca = pca.fit_transform(customers_transformed_df)
+19:47:09 From Ojha, Sonu to Everyone:
+	thank you
+19:47:45 From Dr. A - Instructor to Everyone:
+	# Calculate the PCA explained variance ratio	pca.explained_variance_ratio_
+19:49:50 From Dr. A - Instructor to Everyone:
+	# Create the PCA DataFrame	customers_pca_df = pd.DataFrame(	    customers_pca,	    columns=["PCA1", "PCA2"]	)		# Review the PCA DataFrame	customers_pca_df.head()
+19:50:36 From Dr. A - Instructor to Everyone:
+	# Create a a list to store inertia values and the values of k	inertia = []	k = list(range(1, 11))
+19:51:12 From Dr. A - Instructor to Everyone:
+	# Create a for-loop where each value of k is evaluated using the K-means algorithm	# Fit the model using the service_ratings DataFrame	# Append the value of the computed inertia from the `inertia_` attribute of the KMeans model instance	for i in k:	    k_model = KMeans(n_clusters=i, random_state=1, n_init='auto')	    k_model.fit(customers_pca_df)	    inertia.append(k_model.inertia_)
+19:51:32 From Dr. A - Instructor to Everyone:
+	# Define a DataFrame to hold the values for k and the corresponding inertia	elbow_data = {"k": k, "inertia": inertia}		# Create the DataFrame from the elbow data	df_elbow = pd.DataFrame(elbow_data)		# Review the DataFrame	df_elbow.head()
+19:52:40 From Dr. A - Instructor to Everyone:
+	# Plot the DataFrame	hvplot.extension('bokeh')	df_elbow.hvplot.line(	    x="k", 	    y="inertia", 	    title="Elbow Curve", 	    xticks=k	)
+19:54:46 From Dr. A - Instructor to Everyone:
+	# Define the model Kmeans model using the optimal value of k for the number of clusters.	model = KMeans(n_clusters=3, random_state=1, n_init='auto')
+19:55:00 From Dr. A - Instructor to Everyone:
+	# Fit the model	model.fit(customers_pca_df)		# Make predictions	k_3 = model.predict(customers_pca_df)		# Create a copy of the customers_pca_df DataFrame	customer_pca_predictions_df = customers_pca_df.copy()		# Add a class column with the labels	customer_pca_predictions_df["customer_segments"] = k_3
+19:55:44 From Dr. A - Instructor to Everyone:
+	# Plot the clusters	hvplot.extension('bokeh')	customer_pca_predictions_df.hvplot.scatter(	    x="PCA1",	    y="PCA2",	    by="customer_segments"	)
+19:58:08 From Dr. A - Instructor to Everyone:
+	# Fit the model on the original data	model.fit(customers_transformed_df)
+19:58:47 From Dr. A - Instructor to Everyone:
+	# Make predictions based on the original data	k_3 = model.predict(customers_transformed_df)		# Create a copy of the customers_transformed_df DataFrame	customers_transformed_predictions_df = customers_transformed_df.copy()		# Add a class column with the labels	customers_transformed_predictions_df["customer_segments"] = k_3
+19:59:09 From Dr. A - Instructor to Everyone:
+	# Plot the clusters using the first two feature columns	hvplot.extension('bokeh')	customers_transformed_predictions_df.hvplot.scatter(	    x="feature_1",	    y="feature_2",	    by="customer_segments"	)
+20:39:27 From Dr. A - Instructor to Everyone:
+	import pandas as pd	import numpy as np
+20:39:43 From Dr. A - Instructor to Everyone:
+	from sklearn.feature_selection import SelectKBest from sklearn.feature_selection import chi2
+20:40:34 From Dr. A - Instructor to Everyone:
+	# load data url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.data.csv" names = ['preg', 'plas', 'pres', 'skin', 'test', 'mass', 'pedi', 'age', 'class'] dataframe = pd.read_csv(url, names=names) dataframe.head()
+20:44:23 From Dr. A - Instructor to Everyone:
+	array = dataframe.values 	X = array[:,0:8] 	Y = array[:,8]
+20:46:22 From Dr. A - Instructor to Everyone:
+	# Feature extraction 	test = SelectKBest(score_func=chi2, k=4) 	fit = test.fit(X, Y)
+20:47:55 From Dr. A - Instructor to Everyone:
+	# Summarize scores	np.set_printoptions(precision=3) 	print(fit.scores_) 	features = fit.transform(X)
+20:49:43 From Dr. A - Instructor to Everyone:
+	from sklearn.feature_selection import RFE from sklearn.linear_model import LogisticRegression
+20:50:48 From Dr. A - Instructor to Everyone:
+	# Feature extraction 	model = LogisticRegression(solver='lbfgs', max_iter=1000) 	rfe = RFE(estimator=model, n_features_to_select=3)
+20:51:47 From Dr. A - Instructor to Everyone:
+	fit = rfe.fit(X, Y)
+20:53:00 From Dr. A - Instructor to Everyone:
+	print("Num Features: %s" % (fit.n_features_)) 	print("Selected Features: %s" % (fit.support_)) 	print("Feature Ranking: %s" % (fit.ranking_))
